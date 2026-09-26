@@ -1,0 +1,29 @@
+{
+ "release": "weights-v4",
+ "files": [
+  {
+   "name": "final_dinov3ps.pt",
+   "url": "https://github.com/Misha-Hromov-32/MoscowHack/releases/download/weights-v4/final_dinov3ps.pt",
+   "sha256": "bbb24f62b66cba0d41a13561ddee36435c30d0c10f534d01005e784c4cbb1048",
+   "bytes": 614160619
+  },
+  {
+   "name": "final_vitparts.pt",
+   "url": "https://github.com/Misha-Hromov-32/MoscowHack/releases/download/weights-v4/final_vitparts.pt",
+   "sha256": "0d6010481f30f0fe678ab480ac89670ee0f35d243b30b00945c1593b29ded4e5",
+   "bytes": 177549339
+  },
+  {
+   "name": "gallery_index.npz",
+   "url": "https://github.com/Misha-Hromov-32/MoscowHack/releases/download/weights-v4/gallery_index.npz",
+   "sha256": "5abee98164deb95385a68e47c1cd6960ca0e01cda9d548449a45d263861c5086",
+   "bytes": 9249142
+  },
+  {
+   "name": "yolov8n.pt",
+   "url": "https://github.com/Misha-Hromov-32/MoscowHack/releases/download/weights-v4/yolov8n.pt",
+   "sha256": "f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36",
+   "bytes": 6549796
+  }
+ ]
+}

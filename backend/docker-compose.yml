@@ -1,0 +1,74 @@
+# FALCON ReID — запуск одной командой:
+#   docker compose up --build            -> веб-сервис на http://localhost:8000
+#   docker compose run --rm inference    -> артефакты сдачи (submission/embeddings/candidates)
+# Работает без доступа в интернет: все веса лежат в ./models и копируются в образ.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: falcon
+      POSTGRES_USER: falcon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-falcon}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U falcon"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    shm_size: "2gb"
+    ports:
+      - "8000:8000"
+    environment:
+      GALLERY_INDEX: /app/models/gallery_index.npz
+      DATA_ROOT: /data
+      REFUSAL_THRESHOLD: "${REFUSAL_THRESHOLD:-0.302}"
+      DATABASE_URL: postgresql+asyncpg://falcon:${POSTGRES_PASSWORD:-falcon}@postgres:5432/falcon
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+    volumes:
+      - ${DATA_DIR:-./data}:/data:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [ gpu ]
+
+  # разовый прогон инференса на тестовой выборке -> ./artifacts
+  inference:
+    profiles: ["inference"]
+    image: falcon-reid:latest
+    build: .
+    shm_size: "2gb"
+    environment:
+      DATA_ROOT: /data
+    volumes:
+      - ${DATA_DIR:-./data}:/data:ro
+      - ./artifacts:/app/artifacts
+    command: >
+      python -m src.run_all --ckpt /app/models/final_vit.pt
+      --ckpt2 /app/models/final_convnext.pt
+      --data-root /data --out-dir /app/artifacts
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [ gpu ]
+
+volumes:
+  pgdata:

@@ -1,0 +1,9 @@
+.git
+runs
+artifacts
+data
+docs
+__pycache__
+*.log
+*.err
+models/*.tmp

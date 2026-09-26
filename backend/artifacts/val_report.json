@@ -1,0 +1,25 @@
+{
+ "config": "четверной ансамбль ViT-L@336 + 0.7·ViT-B(части) + 0.5·ConvNeXt + 1.0·DINOv3-L + DBA3/AQE1",
+ "protocol": "holdout 20% идентичностей, кросс-камерный, 35% дистракторов",
+ "ranking": {
+  "mAP": 0.8438,
+  "mINP": 0.8391,
+  "Rank-1": 0.812,
+  "Rank-5": 0.9038,
+  "num_valid_queries": 665.0
+ },
+ "refusal_inferred_cams": {
+  "F1": 0.7684,
+  "TNR": 0.7393,
+  "precision": 0.754,
+  "recall": 0.7835,
+  "threshold": 0.32
+ },
+ "refusal_true_cams": {
+  "F1": 0.7805,
+  "TNR": 0.7715,
+  "precision": 0.7776,
+  "recall": 0.7835,
+  "threshold": 0.318
+ }
+}

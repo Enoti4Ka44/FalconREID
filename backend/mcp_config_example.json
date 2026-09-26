@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "falcon-reid": {
+      "command": "python",
+      "args": ["/home/ivan/PycharmProjects/MoscowHack/mcp_server.py"],
+      "env": {
+        "FALCON_API_URL": "http://localhost:8000",
+        "FALCON_API_KEY": ""
+      }
+    }
+  }
+}
