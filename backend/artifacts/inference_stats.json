@@ -1,0 +1,10 @@
+{
+ "queries": 1110,
+ "gallery": 750,
+ "refused": 100,
+ "accept_rate": 0.9099099099099099,
+ "threshold": 0.455,
+ "max_sim_mean_raw": 0.8055493831634521,
+ "max_sim_mean_crosscam": 0.6689436435699463,
+ "queries_with_samescene_top1": 0.7198198198198198
+}

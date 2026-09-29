@@ -1,0 +1,223 @@
+/*
+ * Анимации лендинга.
+ * Первый экран стартует, когда загрузочный экран снимает с <html> класс
+ * ожидания (html.fl-ready); секции ниже проявляются при прокрутке
+ * ([data-reveal] → .is-visible, см. LandingMotion в landing.tsx).
+ */
+
+/* ── общие ───────────────────────────────────────────────────────────── */
+@keyframes lm-rise    { from { opacity: 0; translate: 0 34px; } }
+@keyframes lm-fade    { from { opacity: 0; } }
+@keyframes lm-pop     { from { opacity: 0; scale: .86; translate: 0 14px; } }
+@keyframes lm-mask-up { from { translate: 0 105%; } }
+@keyframes lm-float   { 50% { translate: 0 -9px; } }
+@keyframes lm-float-s { 50% { translate: 0 -5px; } }
+@keyframes lm-spin    { to { rotate: 360deg; } }
+
+/* полоса прогресса прокрутки */
+.scroll-progress {
+  position: fixed; inset: 0 0 auto; z-index: 60; height: 2px;
+  transform-origin: 0 50%; transform: scaleX(0);
+  background: linear-gradient(90deg, #4f93ff, #7cb9ff 60%, #e9f4ff);
+  box-shadow: 0 0 12px rgba(124, 185, 255, .8);
+  pointer-events: none;
+}
+
+/* шапка выезжает сверху и уплотняется при прокрутке */
+html.fl-ready .landing-header { animation: lm-header .9s cubic-bezier(.2,.7,.2,1) .05s both; }
+@keyframes lm-header { from { translate: 0 -100%; opacity: 0; } }
+.landing-header { transition: box-shadow .4s, background-color .4s; }
+.landing-header.is-scrolled { box-shadow: 0 10px 40px rgba(0, 0, 0, .35); background-color: hsl(var(--background) / .92); }
+.landing-header nav a { position: relative; }
+.landing-header nav a::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 1px;
+  background: linear-gradient(90deg, transparent, #7cb9ff, transparent);
+  scale: 0 1; transition: scale .35s cubic-bezier(.2,.7,.2,1);
+}
+.landing-header nav a:hover::after { scale: 1 1; }
+
+/* ── появление при прокрутке ─────────────────────────────────────────── */
+.motion-ready [data-reveal] {
+  opacity: 0; translate: 0 32px;
+  transition: opacity .9s cubic-bezier(.2,.7,.2,1), translate .9s cubic-bezier(.2,.7,.2,1);
+  transition-delay: var(--d, 0ms);
+}
+.motion-ready [data-reveal="left"]  { translate: -40px 0; }
+.motion-ready [data-reveal="right"] { translate: 40px 0; }
+.motion-ready [data-reveal="scale"] { translate: 0 24px; scale: .96; transition-property: opacity, translate, scale; }
+.motion-ready [data-reveal].is-visible { opacity: 1; translate: 0 0; scale: 1; }
+
+/* ── первый экран ───────────────────────────────────────────────────── */
+[data-hero] { opacity: 0; }
+html.fl-ready [data-hero] { opacity: 1; animation: lm-rise 1s cubic-bezier(.2,.7,.2,1) var(--d, 0ms) both; }
+html.fl-ready [data-hero="fade"] { animation-name: lm-fade; }
+
+.hero-line { display: block; overflow: hidden; padding-bottom: .08em; margin-bottom: -.08em; }
+.hero-line > span { display: inline-block; }
+html.fl-ready .hero-line > span { animation: lm-mask-up 1.05s cubic-bezier(.2,.8,.2,1) var(--d, 0ms) both; }
+
+/* блик по градиентному заголовку */
+.hero-shine {
+  background: linear-gradient(100deg, #7db8ff 0%, #b9dbff 38%, #ffffff 50%, #b9dbff 62%, #7db8ff 100%);
+  background-size: 260% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: lm-shine 5.5s ease-in-out 2.2s infinite;
+}
+@keyframes lm-shine { 0%, 12% { background-position: 110% 0; } 55%, 100% { background-position: -110% 0; } }
+
+/* кнопка первого экрана — мягкое пульсирующее кольцо */
+.hero-cta { position: relative; }
+.hero-cta::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 999px; pointer-events: none;
+  box-shadow: 0 0 0 0 rgba(148, 197, 255, .45);
+  animation: lm-ring 2.8s ease-out 2.6s infinite;
+}
+@keyframes lm-ring { 0% { box-shadow: 0 0 0 0 rgba(148,197,255,.45); } 70%, 100% { box-shadow: 0 0 0 16px rgba(148,197,255,0); } }
+
+/* свечение за машиной дышит и плывёт */
+.hero-glow { animation: lm-glow 9s ease-in-out infinite; }
+@keyframes lm-glow { 50% { opacity: .65; translate: -40px 20px; scale: 1.12; } }
+
+/* параллакс за курсором — на контейнере, чтобы не мешать анимациям внутри */
+.hero-parallax { transition: transform .9s cubic-bezier(.2,.7,.2,1); will-change: transform;
+  transform: translate3d(calc(var(--mx, 0) * -14px), calc(var(--my, 0) * -10px), 0); }
+
+/* машина материализуется сканом слева направо, потом плавает */
+.hero-car { clip-path: inset(0 100% 0 0); }
+html.fl-ready .hero-car {
+  animation:
+    lm-materialize 1.6s cubic-bezier(.65,0,.25,1) .45s both,
+    lm-float 7s ease-in-out 2.1s infinite;
+}
+@keyframes lm-materialize { from { clip-path: inset(0 100% 0 0); opacity: 0; scale: .97; } to { clip-path: inset(0 0 0 0); } }
+
+/* луч сканера по машине: первый проход — вместе с материализацией, дальше периодически */
+.hero-scan {
+  position: absolute; z-index: 15; top: 14%; bottom: 8%; width: 140px; left: calc(49% - 420px); /* центр луча = левый край машины */
+  background: linear-gradient(90deg, transparent, rgba(124,185,255,.08) 45%, rgba(200,230,255,.55) 50%, rgba(124,185,255,.08) 55%, transparent);
+  mix-blend-mode: screen; opacity: 0; pointer-events: none;
+}
+.hero-scan::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #e7f3ff; box-shadow: 0 0 14px 2px rgba(124,185,255,.9); }
+html.fl-ready .hero-scan { animation: lm-scan 1.6s cubic-bezier(.65,0,.25,1) .45s both, lm-scan 2.4s ease-in-out 7s infinite; }
+@keyframes lm-scan { 0% { opacity: 0; translate: 0 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; translate: 700px 0; } }
+
+/* рамка детекции вокруг машины */
+.hero-detect { position: absolute; z-index: 16; left: -4%; right: -3%; top: 11%; bottom: -3%; pointer-events: none; opacity: 0; }
+html.fl-ready .hero-detect { animation: lm-detect .7s cubic-bezier(.2,.8,.2,1) 2.05s both; }
+@keyframes lm-detect { from { opacity: 0; scale: 1.12; } to { opacity: 1; scale: 1; } }
+.hero-detect i { position: absolute; width: 26px; height: 26px; border: 2px solid #9fceff; filter: drop-shadow(0 0 6px rgba(124,185,255,.9)); }
+.hero-detect i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.hero-detect i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+.hero-detect i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; }
+.hero-detect i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+html.fl-ready .hero-detect i { animation: lm-bracket 3.2s ease-in-out 2.8s infinite; }
+@keyframes lm-bracket { 50% { opacity: .55; } }
+.hero-detect-label {
+  position: absolute; left: 50%; top: -38px; translate: -50% 0; display: flex; align-items: center; gap: 8px;
+  padding: 4px 10px; border-radius: 6px; font: 600 11px/1.4 "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  letter-spacing: .06em; color: #e7f3ff; background: rgba(9, 32, 52, .92); border: 1px solid rgba(124,185,255,.45);
+  box-shadow: 0 0 18px rgba(79,147,255,.35); white-space: nowrap;
+}
+.hero-detect-label b { color: #7cb9ff; font-weight: 700; }
+.hero-detect-label::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #3ddc97; box-shadow: 0 0 8px #3ddc97; animation: lm-blink 1.4s ease-in-out infinite; }
+@keyframes lm-blink { 50% { opacity: .25; } }
+
+/* ключевые точки на машине */
+.hero-node { position: absolute; z-index: 17; width: 9px; height: 9px; border-radius: 50%;
+  background: #7cb9ff; box-shadow: 0 0 0 3px rgba(8,24,38,.85), 0 0 14px rgba(124,185,255,.9); opacity: 0; }
+html.fl-ready .hero-node { opacity: 1; animation: lm-pop .5s cubic-bezier(.2,.8,.2,1) var(--d) both; }
+.hero-node::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 1px solid #9fceff; opacity: 0; }
+html.fl-ready .hero-node::after { animation: lm-node-ping 2.6s ease-out calc(var(--d) + .5s) infinite; }
+@keyframes lm-node-ping { 0% { opacity: .9; scale: 1; } 100% { opacity: 0; scale: 3.4; } }
+
+/* карточки характеристик: выскакивают по очереди и покачиваются */
+.hero-tag { opacity: 0; }
+html.fl-ready .hero-tag {
+  opacity: 1;
+  animation: lm-pop .7s cubic-bezier(.2,.8,.2,1) var(--d) both, lm-float-s 6s ease-in-out calc(var(--d) + .7s) infinite;
+}
+
+/* частицы в первом экране */
+.hero-particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.hero-particles span {
+  position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #9fceff;
+  box-shadow: 0 0 10px rgba(124,185,255,.9); opacity: 0;
+  animation: lm-particle var(--t, 9s) linear var(--d, 0s) infinite;
+}
+@keyframes lm-particle { 0% { opacity: 0; translate: 0 30px; } 15% { opacity: .8; } 85% { opacity: .6; } 100% { opacity: 0; translate: var(--x, 0px) -160px; } }
+
+/* ── сценарии: блик и луч скана по карточке ─────────────────────────── */
+.usecase-card { position: relative; }
+.usecase-card .usecase-media::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.18) 50%, transparent 65%);
+  translate: -120% 0; transition: translate .9s cubic-bezier(.2,.7,.2,1);
+}
+.usecase-card:hover .usecase-media::after { translate: 120% 0; }
+.usecase-card .usecase-scan {
+  position: absolute; left: 0; right: 0; top: 0; height: 2px; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, transparent, #9fceff, transparent); box-shadow: 0 0 14px 2px rgba(124,185,255,.8);
+}
+.usecase-card:hover .usecase-scan { animation: lm-card-scan 1.4s ease-in-out infinite; }
+@keyframes lm-card-scan { 0% { opacity: 0; top: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; top: 100%; } }
+.usecase-card:hover { box-shadow: 0 18px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(124,185,255,.25), 0 0 40px rgba(79,147,255,.14); }
+
+/* ── технология: скан по перекрёстку + подпись совпадения ────────────── */
+.tech-scan {
+  position: absolute; top: 0; bottom: 0; width: 22%; z-index: 5; pointer-events: none; mix-blend-mode: screen;
+  background: linear-gradient(90deg, transparent, rgba(124,185,255,.14) 48%, rgba(220,238,255,.5) 50%, rgba(124,185,255,.14) 52%, transparent);
+  animation: lm-tech-scan 5.5s ease-in-out infinite;
+}
+@keyframes lm-tech-scan { 0% { left: -25%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { left: 103%; opacity: 0; } }
+.match-chip {
+  position: absolute; z-index: 8; translate: -50% calc(-100% - 8px); padding: 3px 9px; border-radius: 6px;
+  font: 600 11px/1.4 "Cascadia Code", "JetBrains Mono", Consolas, monospace; white-space: nowrap;
+  color: #e7f3ff; background: rgba(9,32,52,.94); border: 1px solid rgba(124,185,255,.55);
+  box-shadow: 0 0 16px rgba(79,147,255,.5); animation: lm-pop .35s cubic-bezier(.2,.8,.2,1) both; pointer-events: none;
+}
+.tech-panel { transition: box-shadow .6s; }
+.tech-panel:hover { box-shadow: 0 0 60px rgba(79,147,255,.18); }
+.tech-badge { transition: border-color .3s, background-color .3s, translate .3s; }
+.tech-badge:hover { border-color: rgba(124,185,255,.45); background-color: rgba(124,185,255,.07); translate: 0 -2px; }
+
+/* ── «Нам доверяют»: бегущая строка ─────────────────────────────────── */
+.trust-marquee { overflow: hidden; -webkit-mask: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); mask: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+.trust-track { display: flex; width: max-content; gap: 4rem; animation: lm-marquee 28s linear infinite; }
+.trust-marquee:hover .trust-track { animation-play-state: paused; }
+@keyframes lm-marquee { to { translate: calc(-50% - 2rem) 0; } }
+
+/* ── API: строки кода появляются каскадом ───────────────────────────── */
+.code-line { display: block; opacity: 0; }
+.is-visible .code-line { animation: lm-code .45s ease-out calc(var(--i) * 55ms + 150ms) both; }
+@keyframes lm-code { from { opacity: 0; translate: -10px 0; } to { opacity: 1; translate: 0 0; } }
+.code-caret { display: inline-block; width: 7px; height: 1.1em; margin-left: 2px; vertical-align: -2px; background: #7cb9ff; animation: lm-caret 1s steps(1) infinite; }
+@keyframes lm-caret { 50% { opacity: 0; } }
+.api-feature svg { transition: rotate .5s cubic-bezier(.2,.8,.2,1), scale .5s; }
+.api-feature:hover svg { rotate: -12deg; scale: 1.2; }
+
+/* ── финальный блок: вращающаяся светящаяся рамка ───────────────────── */
+.cta-frame { position: relative; isolation: isolate; }
+.cta-frame::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; border-radius: inherit; padding: 1.5px; pointer-events: none;
+  background: conic-gradient(from var(--cta-a, 0deg), transparent 0 55%, rgba(79,147,255,.6) 68%, #e7f3ff 78%, rgba(124,185,255,.9) 86%, transparent 100%);
+  filter: drop-shadow(0 0 6px rgba(124,185,255,.8));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: lm-cta-border 6s linear infinite;
+}
+@property --cta-a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes lm-cta-border { to { --cta-a: 360deg; } }
+.cta-car { animation: lm-cta-car 8s ease-in-out infinite; }
+@keyframes lm-cta-car { 50% { translate: -18px -6px; } }
+.cta-button { animation: lm-cta-pulse 2.6s ease-in-out infinite; }
+@keyframes lm-cta-pulse { 50% { box-shadow: 0 0 32px rgba(148,197,255,.45); } }
+
+/* ── уменьшение движения ────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  [data-hero], .hero-tag, .hero-node, .hero-detect, .code-line { opacity: 1 !important; animation: none !important; }
+  .hero-car { clip-path: none !important; animation: none !important; }
+  .hero-line > span { animation: none !important; }
+  .hero-scan, .hero-particles, .tech-scan, .usecase-scan { display: none !important; }
+  .motion-ready [data-reveal] { opacity: 1 !important; translate: 0 0 !important; scale: 1 !important; }
+  .trust-track, .cta-car, .cta-button, .hero-glow, .hero-shine { animation: none !important; }
+  .hero-parallax { transform: none !important; }
+}

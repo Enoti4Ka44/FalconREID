@@ -1,0 +1,5 @@
+{"models":[
+  {"ckpt":"runs/holdout_vitl/best.pt","backbone":"vit_large_patch14_reg4_dinov2.lvd142m","img_size":224,"weight":1.0},
+  {"ckpt":"runs/holdout/best.pt","backbone":"vit_base_patch14_reg4_dinov2.lvd142m","img_size":252,"weight":0.7},
+  {"ckpt":"runs/holdout_convnext/best.pt","backbone":"convnext_base.fb_in22k_ft_in1k","img_size":224,"weight":0.5},
+  {"ckpt":"runs/holdout_dinov3/best.pt","backbone":"vit_large_patch16_dinov3.lvd1689m","img_size":256,"weight":1.0}]}

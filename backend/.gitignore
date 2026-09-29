@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+runs/
+*.log
+*.err
+.DS_Store
+# большие веса не в git (поставляются отдельно/через LFS или релиз)
+models/*.pt
+models/*.npz
+runtime/
+data
+# промежуточные эмбеддинги (>100 МБ, не нужны для воспроизведения)
+artifacts/train_embeddings_*.npz

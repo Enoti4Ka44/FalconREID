@@ -1,0 +1,16 @@
+{
+ "models": [
+  {
+   "ckpt": "models/final_dinov3ps.pt",
+   "backbone": "vit_large_patch16_dinov3.lvd1689m",
+   "img_size": 256,
+   "weight": 1.0
+  },
+  {
+   "ckpt": "models/final_vitparts.pt",
+   "backbone": "vit_base_patch14_reg4_dinov2.lvd142m",
+   "img_size": 252,
+   "weight": 0.7
+  }
+ ]
+}

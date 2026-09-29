@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="ru" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#06111c" />
+    <meta name="description" content="FALCON ReID — визуальный поиск автомобилей на городских камерах без использования госномера." />
+    <link rel="icon" type="image/svg+xml" href="/falcon-mark.svg" />
+    <title>FALCON ReID — один автомобиль, тысячи камер</title>
+
+    <!-- ── Загрузочный экран: только на лендинге («/»); остальные страницы — без него ── -->
+    <script>
+      (function () {
+        var p = location.pathname;
+        if (p !== "/" && p !== "/index.html") document.documentElement.classList.add("fl-ready", "fl-skip");
+      })();
+    </script>
+    <style>
+      html.fl-skip #fl-loader { display: none !important; }
+      @property --fl-hole { syntax: "<length>"; inherits: false; initial-value: 0px; }
+
+      html, body { background: #06111c; margin: 0; }
+      html:not(.fl-ready) body { overflow: hidden; }
+      html:not(.fl-ready) #root { opacity: 0; filter: blur(14px); transform: scale(1.015); }
+      #root { transition: opacity .9s ease .15s, filter 1s ease .15s, transform 1.1s cubic-bezier(.2,.7,.2,1) .15s; }
+
+      #fl-loader {
+        --blue: #7cb9ff; --blue-2: #4f93ff; --ice: #f5f9ff;
+        position: fixed; inset: 0; z-index: 2147483000;
+        display: grid; place-items: center; overflow: hidden;
+        background:
+          radial-gradient(60% 50% at 50% 42%, rgba(79,147,255,.16), transparent 70%),
+          radial-gradient(120% 90% at 50% 120%, #0b2238 0%, transparent 60%),
+          #06111c;
+        color: var(--ice);
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        --fl-hole: 0px;
+        -webkit-mask: radial-gradient(circle at 50% 42%, transparent var(--fl-hole), #000 calc(var(--fl-hole) + 1.5px));
+                mask: radial-gradient(circle at 50% 42%, transparent var(--fl-hole), #000 calc(var(--fl-hole) + 1.5px));
+        transition: --fl-hole 1.05s cubic-bezier(.7,0,.2,1), opacity .6s ease .6s;
+      }
+      #fl-loader.fl-exit { --fl-hole: 150vmax; opacity: 0; }
+
+      /* перспективная сетка «пола», уходящая к горизонту */
+      .fl-grid {
+        position: absolute; left: -50%; right: -50%; bottom: -10%; height: 70%;
+        background-image:
+          linear-gradient(rgba(124,185,255,.13) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(124,185,255,.13) 1px, transparent 1px);
+        background-size: 64px 64px;
+        transform: perspective(520px) rotateX(64deg);
+        transform-origin: 50% 0;
+        -webkit-mask: linear-gradient(to top, #000 10%, transparent 85%);
+                mask: linear-gradient(to top, #000 10%, transparent 85%);
+        animation: fl-grid 3.2s linear infinite;
+      }
+      @keyframes fl-grid { to { background-position: 0 64px, 0 0; } }
+
+      /* медленно плывущие частицы-«камеры» на фоне */
+      .fl-dust { position: absolute; inset: 0; pointer-events: none; }
+      .fl-dust i {
+        position: absolute; width: 2px; height: 2px; border-radius: 50%;
+        background: var(--blue); box-shadow: 0 0 8px var(--blue); opacity: 0;
+        animation: fl-dust 7s ease-in-out infinite;
+      }
+      @keyframes fl-dust { 0% { opacity: 0; transform: translateY(12px); } 30%, 70% { opacity: .7; } 100% { opacity: 0; transform: translateY(-28px); } }
+
+      .fl-stage { position: relative; display: grid; justify-items: center; gap: 30px; transform: translateY(-3vh); }
+      .fl-exit .fl-stage { transition: transform 1s cubic-bezier(.7,0,.2,1), opacity .5s; transform: translateY(-3vh) scale(1.35); opacity: 0; }
+
+      /* ── объектив ── */
+      .fl-lens { position: relative; width: 248px; height: 248px; }
+      .fl-lens svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+      .fl-halo {
+        position: absolute; inset: 22%; border-radius: 50%;
+        background: radial-gradient(circle, rgba(124,185,255,.35), rgba(79,147,255,.08) 55%, transparent 72%);
+        filter: blur(6px); animation: fl-breathe 3.4s ease-in-out infinite;
+      }
+      @keyframes fl-breathe { 50% { transform: scale(1.12); opacity: .75; } }
+
+      .fl-sweep {
+        position: absolute; inset: 7%; border-radius: 50%;
+        background: conic-gradient(from 0deg,
+          transparent 0 68%, rgba(79,147,255,.05) 74%, rgba(124,185,255,.22) 93%,
+          rgba(170,210,255,.55) 99.2%, rgba(245,249,255,.95) 99.7%, transparent 100%);
+        -webkit-mask: radial-gradient(circle, transparent 30%, #000 42%, #000 96%, transparent 100%);
+                mask: radial-gradient(circle, transparent 30%, #000 42%, #000 96%, transparent 100%);
+        mix-blend-mode: screen;
+        animation: fl-spin 2.8s linear infinite;
+      }
+      .fl-ring-a { transform-origin: 124px 124px; animation: fl-spin 22s linear infinite; }
+      .fl-ring-b { transform-origin: 124px 124px; animation: fl-spin 14s linear infinite reverse; }
+      @keyframes fl-spin { to { transform: rotate(360deg); } }
+
+      .fl-progress-arc { transition: stroke-dashoffset .25s linear; filter: drop-shadow(0 0 6px rgba(124,185,255,.85)); }
+
+      .fl-node circle.core { fill: #0b2238; stroke: rgba(124,185,255,.35); stroke-width: 1.5; transition: fill .45s, stroke .45s; }
+      .fl-node circle.pulse { fill: none; stroke: var(--blue); stroke-width: 1.2; opacity: 0; transform-box: fill-box; transform-origin: center; }
+      .fl-node.on circle.core { fill: var(--blue); stroke: var(--ice); filter: drop-shadow(0 0 6px var(--blue)); }
+      .fl-node.on circle.pulse { animation: fl-ping 1.1s ease-out 1; }
+      @keyframes fl-ping { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(3.2); } }
+
+      .fl-link { stroke: var(--blue); stroke-width: 1.2; stroke-linecap: round; opacity: .75; transition: stroke-dashoffset .7s ease; filter: drop-shadow(0 0 3px rgba(124,185,255,.9)); }
+
+      .fl-mark {
+        position: absolute; inset: 35%; display: grid; place-items: center;
+        animation: fl-float 4s ease-in-out infinite;
+      }
+      .fl-mark svg { position: static; filter: drop-shadow(0 0 18px rgba(124,185,255,.55)); }
+      @keyframes fl-float { 50% { transform: translateY(-5px); } }
+      .fl-complete .fl-mark svg { animation: fl-flash .7s ease-out 1; }
+      @keyframes fl-flash { 40% { filter: drop-shadow(0 0 34px rgba(245,249,255,1)); transform: scale(1.08); } }
+
+      /* ── подпись и прогресс ── */
+      .fl-brand { display: flex; align-items: baseline; gap: 10px; font-size: 26px; letter-spacing: .32em; font-weight: 700; padding-left: .32em; }
+      .fl-brand b { font-weight: 700; background: linear-gradient(90deg, #f5f9ff 0%, #f5f9ff 40%, #7cb9ff 50%, #f5f9ff 60%, #f5f9ff 100%);
+        background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: fl-shine 3.2s ease-in-out infinite; }
+      .fl-brand span { font-weight: 300; color: var(--blue); letter-spacing: .12em; font-size: 22px; }
+      @keyframes fl-shine { 0% { background-position: 120% 0; } 100% { background-position: -120% 0; } }
+
+      .fl-status { height: 20px; font-size: 13px; letter-spacing: .06em; color: rgba(191,219,254,.72); text-align: center; margin-top: -14px; }
+      .fl-status span { display: inline-block; transition: opacity .3s, transform .3s; }
+      .fl-status span.swap { opacity: 0; transform: translateY(6px); }
+
+      .fl-bar { width: min(320px, 72vw); display: grid; gap: 10px; }
+      .fl-track { position: relative; height: 3px; border-radius: 3px; background: rgba(124,185,255,.14); overflow: hidden; }
+      .fl-fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 3px;
+        background: linear-gradient(90deg, #4f93ff, #7cb9ff 70%, #f5f9ff); box-shadow: 0 0 14px rgba(124,185,255,.9); }
+      .fl-fill::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent);
+        width: 60px; animation: fl-glint 1.4s ease-in-out infinite; }
+      @keyframes fl-glint { from { transform: translateX(-60px); } to { transform: translateX(340px); } }
+      .fl-meta { display: flex; justify-content: space-between; font: 500 11px/1 "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+        letter-spacing: .14em; color: rgba(191,219,254,.55); text-transform: uppercase; }
+      .fl-pct { color: var(--ice); font-variant-numeric: tabular-nums; }
+
+      @media (max-width: 480px) {
+        .fl-lens { width: 196px; height: 196px; }
+        .fl-brand { font-size: 21px; } .fl-brand span { font-size: 18px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #fl-loader *, #fl-loader { animation: none !important; }
+        #fl-loader { transition: opacity .4s ease; }
+        #fl-loader.fl-exit { --fl-hole: 0px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="fl-loader" role="progressbar" aria-label="Загрузка FALCON ReID" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="fl-grid"></div>
+      <div class="fl-dust" id="fl-dust"></div>
+
+      <div class="fl-stage">
+        <div class="fl-lens">
+          <div class="fl-halo"></div>
+          <div class="fl-sweep"></div>
+          <svg viewBox="0 0 248 248" aria-hidden="true">
+            <!-- внешнее кольцо с делениями объектива -->
+            <g class="fl-ring-a">
+              <circle cx="124" cy="124" r="118" fill="none" stroke="rgba(124,185,255,.22)" stroke-width="1" stroke-dasharray="2 7" />
+              <circle cx="124" cy="124" r="110" fill="none" stroke="rgba(124,185,255,.10)" stroke-width="6" stroke-dasharray="40 26" />
+            </g>
+            <g class="fl-ring-b">
+              <circle cx="124" cy="124" r="72" fill="none" stroke="rgba(124,185,255,.28)" stroke-width="1" stroke-dasharray="14 10 2 10" />
+            </g>
+            <!-- дуга прогресса -->
+            <circle cx="124" cy="124" r="96" fill="none" stroke="rgba(124,185,255,.10)" stroke-width="2.5" />
+            <circle id="fl-arc" class="fl-progress-arc" cx="124" cy="124" r="96" fill="none" stroke="#7cb9ff" stroke-width="2.5"
+                    stroke-linecap="round" transform="rotate(-90 124 124)" stroke-dasharray="603.19" stroke-dashoffset="603.19" />
+            <!-- связи между «камерами» и сами камеры (строятся скриптом) -->
+            <g id="fl-links"></g>
+            <g id="fl-nodes"></g>
+          </svg>
+          <div class="fl-mark">
+            <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+              <circle cx="32" cy="32" r="30" fill="#F5F9FF" />
+              <path d="M15 39c12-2 19-8 25-21 5 8 6 16 3 25-5-6-10-9-17-10 3 4 5 9 5 14-7-1-12-4-16-8Z" fill="#071522" />
+              <path d="M23 20c6 1 11 3 15 7-5 1-9 3-13 7-1-5-2-9-2-14Z" fill="#7CB9FF" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="fl-brand"><b>FALCON</b><span>ReID</span></div>
+        <div class="fl-status"><span id="fl-status">Подключаемся к сети камер</span></div>
+
+        <div class="fl-bar">
+          <div class="fl-track"><div class="fl-fill" id="fl-fill"></div></div>
+          <div class="fl-meta"><span id="fl-cams">камеры 0/8</span><span class="fl-pct" id="fl-pct">0%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* Загрузочный экран FALCON ReID — только на лендинге.
+         Показывается сразу, пока грузится приложение. Прогресс — по реальным событиям:
+         приложение смонтировано (window.__falconLoader.appReady()), шрифты, картинки первого
+         экрана, window.load. Минимальный показ 1.6 c, страховка — 12 c.
+         ?loader=hold — оставить экран на месте (для просмотра дизайна). */
+      (function () {
+        var root = document.documentElement;
+        var el = document.getElementById("fl-loader");
+        if (!el) return;
+        if (root.classList.contains("fl-skip")) { el.parentNode.removeChild(el); return; }
+        var hold = /[?&]loader=hold\b/.test(location.search);
+        var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var T0 = performance.now(), MIN = 1600, MAX = 12000;
+
+        // — камеры по кругу и связи между соседними —
+        var N = 8, R = 96, C = 124, ns = "http://www.w3.org/2000/svg";
+        var nodesG = document.getElementById("fl-nodes"), linksG = document.getElementById("fl-links");
+        var pts = [], nodes = [], links = [];
+        for (var i = 0; i < N; i++) {
+          var a = -Math.PI / 2 + (i / N) * Math.PI * 2;
+          pts.push([C + R * Math.cos(a), C + R * Math.sin(a)]);
+        }
+        for (i = 0; i < N; i++) {
+          var p = pts[i], q = pts[(i + 3) % N];            // «звезда»: связи через две камеры
+          var ln = document.createElementNS(ns, "line");
+          ln.setAttribute("x1", p[0]); ln.setAttribute("y1", p[1]); ln.setAttribute("x2", q[0]); ln.setAttribute("y2", q[1]);
+          var len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+          ln.setAttribute("class", "fl-link"); ln.style.strokeDasharray = len; ln.style.strokeDashoffset = len;
+          linksG.appendChild(ln); links.push([ln, len]);
+          var g = document.createElementNS(ns, "g"); g.setAttribute("class", "fl-node");
+          var pulse = document.createElementNS(ns, "circle"); pulse.setAttribute("class", "pulse");
+          pulse.setAttribute("cx", p[0]); pulse.setAttribute("cy", p[1]); pulse.setAttribute("r", 5);
+          var core = document.createElementNS(ns, "circle"); core.setAttribute("class", "core");
+          core.setAttribute("cx", p[0]); core.setAttribute("cy", p[1]); core.setAttribute("r", 5);
+          g.appendChild(pulse); g.appendChild(core); nodesG.appendChild(g); nodes.push(g);
+        }
+
+        // — частицы фона —
+        var dust = document.getElementById("fl-dust");
+        for (i = 0; i < 26; i++) {
+          var d = document.createElement("i");
+          d.style.left = (Math.random() * 100) + "%"; d.style.top = (20 + Math.random() * 75) + "%";
+          d.style.animationDelay = (Math.random() * 7) + "s"; d.style.animationDuration = (5 + Math.random() * 5) + "s";
+          dust.appendChild(d);
+        }
+
+        // — задачи загрузки —
+        var tasks = {}, total = 0, doneW = 0;
+        function task(id, w) { tasks[id] = { w: w, done: false }; total += w; }
+        function done(id) { var t = tasks[id]; if (t && !t.done) { t.done = true; doneW += t.w; } }
+
+        task("app", 4); task("fonts", 1); task("window", 2);
+        var imgs = ["/falcon-mark.svg", "/hero-car-figma.png", "/case-city-v2.jpg", "/case-gate-v2.jpg",
+                    "/case-logistics-v2.jpg", "/case-parking-v2.jpg", "/technology-reid-matches.png", "/cta-car-figma.png"];
+        imgs.forEach(function (src, k) {
+          var id = "img" + k; task(id, 1);
+          var im = new Image(); im.onload = im.onerror = function () { done(id); }; im.src = src;
+        });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { done("fonts"); });
+        else done("fonts");
+        if (document.readyState === "complete") done("window");
+        else window.addEventListener("load", function () { done("window"); });
+
+        window.__falconLoader = { appReady: function () { done("app"); } };
+        setTimeout(function () { for (var k in tasks) done(k); }, MAX);   // страховка
+
+        // — отрисовка прогресса —
+        var arc = document.getElementById("fl-arc"), ARC = 603.19;
+        var fill = document.getElementById("fl-fill"), pct = document.getElementById("fl-pct");
+        var cams = document.getElementById("fl-cams"), status = document.getElementById("fl-status");
+        var shown = 0, lit = 0, phase = -1, finishing = false, last = performance.now();
+        var phases = ["Подключаемся к сети камер", "Загружаем цифровые признаки", "Сопоставляем ракурсы", "Почти готово", "Готово"];
+
+        function setStatus(n) {
+          if (n === phase) return; phase = n;
+          status.className = "swap";
+          setTimeout(function () { status.textContent = phases[n]; status.className = ""; }, 180);
+        }
+
+        function frame(now) {
+          var real = total ? doneW / total : 0;
+          var elapsed = now - T0;
+          var ready = real >= 1 && elapsed >= MIN && !hold;
+          // пока ждём — плавно ползём вперёд, но не дальше реального прогресса + запаса
+          var creep = Math.min(0.9, real + 0.12, elapsed / 6000);
+          var target = ready ? 1 : Math.max(real * 0.97, creep);
+          if (hold) target = 0.72;
+          // сглаживание по времени, а не по кадрам: одинаково при 30/60/144 Гц и в фоне
+          var dt = Math.max(0, Math.min(0.25, (now - last) / 1000)); last = Math.max(last, now);
+          shown += (target - shown) * (1 - Math.exp(-dt / (ready ? 0.11 : 0.3)));
+          if (ready && shown > 0.992) shown = 1;
+
+          var p = Math.round(shown * 100);
+          arc.style.strokeDashoffset = (ARC * (1 - shown)).toFixed(2);
+          fill.style.width = (shown * 100).toFixed(2) + "%";
+          pct.textContent = p + "%";
+          el.setAttribute("aria-valuenow", p);
+
+          var want = Math.min(N, Math.floor(shown * N + 0.0001));
+          while (lit < want) {
+            nodes[lit].classList.add("on");
+            var prev = (lit + N - 3) % N;                          // связь к уже найденной камере
+            if (nodes[prev].classList.contains("on")) links[prev][0].style.strokeDashoffset = 0;
+            if (nodes[(lit + 3) % N].classList.contains("on")) links[lit][0].style.strokeDashoffset = 0;
+            lit++;
+          }
+          cams.textContent = "камеры " + lit + "/" + N;
+          setStatus(shown >= 1 ? 4 : shown > 0.82 ? 3 : shown > 0.5 ? 2 : shown > 0.22 ? 1 : 0);
+
+          if (shown >= 1 && !finishing) finish();
+        }
+        function loop(now) { if (finishing) return; frame(now); requestAnimationFrame(loop); }
+
+        function finish() {
+          finishing = true;
+          clearInterval(bg);
+          for (var j = 0; j < N; j++) links[j][0].style.strokeDashoffset = 0;
+          el.classList.add("fl-complete");
+          setTimeout(function () {
+            root.classList.add("fl-ready");
+            el.classList.add("fl-exit");
+            setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, reduce ? 500 : 1400);
+          }, reduce ? 100 : 520);
+        }
+
+        requestAnimationFrame(loop);
+        // страховка: в фоновой вкладке requestAnimationFrame стоит, таймер — нет
+        var bg = setInterval(function () { if (!finishing) frame(performance.now()); }, 150);
+      })();
+    </script>
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

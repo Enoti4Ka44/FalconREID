@@ -1,0 +1,37 @@
+# Точные версии (требование постановщика, Q&A вопрос 39): окружение, на котором
+# обучены модели и получены все метрики. Windows 11 / Linux, Python 3.12, CUDA 12.6.
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu126
+# Docker-образ собирается на pytorch/pytorch:2.5.1-cuda12.1 (стенд: драйвер CUDA 12.2),
+# его зависимости — в requirements.docker.txt.
+
+# --- ML: обучение, инференс, метрики ---
+torch==2.14.0+cu126
+torchvision==0.29.0+cu126
+timm==1.0.29
+numpy==2.5.2
+pandas==3.0.5
+pillow==10.4.0
+scikit-learn==1.7.2
+scipy==1.18.1
+faiss-cpu==1.15.0
+matplotlib==3.10.3
+tqdm==4.67.1
+huggingface_hub==1.32.0
+safetensors==0.8.0
+
+# --- веб-сервис (API + интерфейс оператора) ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+pydantic-settings==2.7.1
+# детектор ТС только для удобства интерфейса (в оценку не входит, ТЗ §3)
+ultralytics==8.3.40
+opencv-python==5.0.0.93
+
+# --- база данных и аутентификация ---
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-jose[cryptography]==3.3.0

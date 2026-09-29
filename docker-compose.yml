@@ -1,0 +1,104 @@
+# FALCON ReID — запуск одной командой.
+#
+#   docker compose up --build -d
+#       веб-интерфейс  http://localhost:8080
+#       API / Swagger  http://localhost:8000/docs
+#
+#   docker compose run --rm inference
+#       артефакты сдачи (submission.csv, embeddings.npy, candidates.csv)
+#       для test_query.csv / test_gallery.csv из $DATA_DIR -> $OUT_DIR
+#
+# DATA_DIR — каталог датасета (images/, test_query.csv, test_gallery.csv,
+# для интерфейса также crops/); по умолчанию ./backend/data.
+# Контейнеры работают без интернета: веса моделей лежат в образе.
+# Без видеокарты: docker compose -f docker-compose.yml -f docker-compose.cpu.yml ...
+
+name: falcon-reid
+
+x-gpu: &gpu
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu]
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: falcon
+      POSTGRES_USER: falcon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-falcon}
+    volumes:
+      - falcon-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U falcon -d falcon"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    <<: *gpu
+    build:
+      context: ./backend
+    image: falcon-reid-backend:latest
+    restart: unless-stopped
+    shm_size: "2gb"
+    environment:
+      DATA_ROOT: /data
+      GALLERY_INDEX: /app/models/gallery_index.npz
+      DATABASE_URL: postgresql+asyncpg://falcon:${POSTGRES_PASSWORD:-falcon}@postgres:5432/falcon
+      JWT_SECRET: ${JWT_SECRET:-falcon-local-development-secret}
+      # демо-пользователь, создаётся при старте (смените для публичного стенда)
+      SEED_USERNAME: ${SEED_USERNAME:-test}
+      SEED_PASSWORD: ${SEED_PASSWORD:-test}
+      # пусто = порог из models/threshold.json (τ = 0.455, обоснование в README)
+      REFUSAL_THRESHOLD: ${REFUSAL_THRESHOLD:-}
+    volumes:
+      - ${DATA_DIR:-./backend/data}:/data:ro
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+
+  frontend:
+    build:
+      context: ./frontend
+    image: falcon-reid-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Разовый прогон инференса на тестовой выборке (для проверки жюри).
+  # Профиль означает, что `docker compose up` его не запускает;
+  # `docker compose run --rm inference` — запускает.
+  inference:
+    <<: *gpu
+    profiles: ["inference"]
+    build:
+      context: ./backend
+    image: falcon-reid-backend:latest
+    shm_size: "2gb"
+    environment:
+      DATA_ROOT: /data
+      REFUSAL_THRESHOLD: ${REFUSAL_THRESHOLD:-}
+    volumes:
+      - ${DATA_DIR:-./backend/data}:/data:ro
+      - ${OUT_DIR:-./output}:/app/artifacts
+    command: ["python", "-m", "src.run_all", "--data-root", "/data", "--out-dir", "/app/artifacts"]
+
+volumes:
+  falcon-postgres:

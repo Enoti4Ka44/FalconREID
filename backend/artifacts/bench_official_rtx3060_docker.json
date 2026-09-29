@@ -1,0 +1,22 @@
+{
+ "latency_b1_ms": 47.1,
+ "latency_p95_ms": 52.4,
+ "fps": {
+  "1": 22.4,
+  "8": 48.0,
+  "16": 50.7,
+  "32": 53.2
+ },
+ "best_fps": 53.2,
+ "score_latency": 0.821,
+ "score_throughput": 0.064,
+ "points_of_20": 8.85,
+ "prod_extractor": true,
+ "cuda_graphs": true,
+ "flip": false,
+ "gpu_decode": false,
+ "compile": false,
+ "peak_vram_gb": 1.87,
+ "gpu": "NVIDIA GeForce RTX 3060",
+ "env": "Docker Desktop (WSL2), образ falcon-reid-backend, torch 2.5.1+cu121"
+}

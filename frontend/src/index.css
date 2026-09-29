@@ -1,0 +1,246 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: Inter;
+  src: local("Inter");
+  font-display: swap;
+}
+@layer base {
+  :root {
+    --background: 207 56% 6%;
+    --foreground: 210 40% 96%;
+    --card: 207 45% 9%;
+    --card-foreground: 210 40% 96%;
+    --primary: 211 100% 71%;
+    --primary-foreground: 210 60% 8%;
+    --secondary: 207 35% 14%;
+    --secondary-foreground: 210 30% 92%;
+    --muted: 207 32% 13%;
+    --muted-foreground: 210 16% 65%;
+    --accent: 207 34% 16%;
+    --accent-foreground: 210 40% 96%;
+    --border: 207 30% 19%;
+    --input: 207 30% 19%;
+    --ring: 211 100% 71%;
+    --radius: 0.75rem;
+  }
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    min-width: 320px;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: hsl(var(--primary) / 0.28);
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply mb-4 text-[11px] font-semibold uppercase tracking-[.23em] text-blue-200/65;
+  }
+  .section-title {
+    @apply text-3xl font-medium leading-tight tracking-[-.035em] sm:text-[40px];
+  }
+  .section-line {
+    @apply relative border-b border-border;
+  }
+  .section-line::before {
+    content: "";
+    @apply absolute left-1/2 top-0 h-px w-[65%] -translate-x-1/2;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(91, 166, 248, 0.18),
+      transparent
+    );
+  }
+  .text-gradient {
+    background: linear-gradient(90deg, #7db8ff, #b9dbff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/*
+ * Единый порог читаемости для служебных подписей.
+ * Микротекст остаётся визуально второстепенным за счёт цвета, веса и трекинга,
+ * но больше не опускается ниже 13px.
+ */
+@layer utilities {
+  .text-\[8px\],
+  .text-\[9px\],
+  .text-\[10px\] {
+    font-size: 0.8125rem !important;
+    line-height: 1.125rem !important;
+  }
+
+  .text-\[11px\],
+  .text-\[12px\] {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .text-\[13px\] {
+    font-size: 0.9375rem !important;
+    line-height: 1.375rem !important;
+  }
+
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.page-grid {
+  background: hsl(var(--background));
+}
+.hero-continuum {
+  position: relative;
+  isolation: isolate;
+}
+.hero-continuum::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: clamp(760px, 56.35vw, 1120px);
+  background: url("/hero-grid-background.png") center top / cover no-repeat;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 66%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to bottom, #000 0%, #000 66%, transparent 100%);
+}
+.hero-grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--background)) 0%,
+    transparent 32%,
+    transparent 76%,
+    hsl(var(--background)) 100%
+  );
+}
+.hero-glow {
+  position: absolute;
+  width: 650px;
+  height: 430px;
+  right: 4%;
+  top: 13%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(56, 138, 231, 0.15),
+    transparent 67%
+  );
+  filter: blur(25px);
+}
+.scan-node {
+  position: absolute;
+  z-index: 12;
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgba(198, 229, 255, 0.9);
+  background: rgba(54, 144, 231, 0.28);
+  box-shadow:
+    0 0 0 3px rgba(8, 24, 38, 0.9),
+    0 0 13px rgba(107, 185, 255, 0.65);
+}
+.hero-spec::before {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border: 1px solid rgba(191, 224, 255, 0.8);
+  background: #0b2033;
+  box-shadow: 0 0 0 3px rgba(8, 24, 38, 0.75);
+  left: 50%;
+  bottom: -24px;
+}
+.hero-spec:nth-of-type(7)::before,
+.hero-spec:nth-of-type(9)::before {
+  top: -24px;
+  bottom: auto;
+}
+.tech-panel::before {
+  content: "";
+  position: absolute;
+  inset: -80px 20% auto;
+  height: 150px;
+  background: rgba(52, 139, 232, 0.2);
+  filter: blur(60px);
+}
+.cta-grid {
+  background-image:
+    linear-gradient(rgba(73, 139, 199, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(73, 139, 199, 0.07) 1px, transparent 1px);
+  background-size: 38px 38px;
+}
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: -5rem;
+  z-index: 100;
+  border-radius: 0.5rem;
+  background: white;
+  color: black;
+  padding: 0.75rem 1rem;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+.app-shell { position: relative; isolation: isolate; overflow-x: hidden; background: linear-gradient(rgba(52,117,177,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(52,117,177,.035) 1px,transparent 1px),#050d16; background-size:44px 44px; }
+.app-shell::before { content:""; position:fixed; inset:72px 0 auto; z-index:-1; height:560px; background:linear-gradient(180deg,rgba(16,55,88,.13),transparent 75%); pointer-events:none; }
+.app-orb { position:fixed; z-index:-1; border-radius:50%; filter:blur(100px); pointer-events:none; }
+.app-orb-one { right:-150px; top:180px; width:480px; height:480px; background:rgba(41,119,204,.12); }
+.app-orb-two { bottom:-220px; left:-160px; width:520px; height:520px; background:rgba(43,133,211,.08); }
+.compare-viewer:has(.comparison-range:focus-visible) { box-shadow:inset 0 0 0 2px rgba(125,184,255,.65); }
+.comparison-range::-webkit-slider-thumb { width:40px; height:40px; appearance:none; }
+.comparison-range::-moz-range-thumb { width:40px; height:40px; border:0; background:transparent; }
+.app-shell ::-webkit-scrollbar { width:8px; height:8px; }
+.app-shell ::-webkit-scrollbar-track { background:rgba(255,255,255,.02); }
+.app-shell ::-webkit-scrollbar-thumb { border-radius:999px; background:rgba(125,184,255,.18); }
+
+@media (max-width: 767px) { .compare-viewer { min-height:330px; } }
+
+@media (max-width: 1023px) {
+  .hero-grid {
+    min-height: auto;
+  }
+  .hero-grid::after {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--background) / 0.55),
+      transparent 40%,
+      hsl(var(--background) / 0.25)
+    );
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

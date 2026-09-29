@@ -1,0 +1,35 @@
+{
+ "gallery_size": 1000000,
+ "dim": 3072,
+ "index": "HNSW32 + SQ8 (int8)",
+ "index_ram_gb": 2.86,
+ "exact_ms_per_query": 17.03,
+ "hnsw_build_s": 553.1,
+ "operating_point": "efSearch=256",
+ "hnsw_ms_per_query": 1.067,
+ "recall@10_vs_exact": 0.8706,
+ "speedup": 16.0,
+ "sweep": {
+  "efSearch=64": {
+   "ms": 3.431,
+   "recall@10": 0.8018,
+   "speedup": 5.0
+  },
+  "efSearch=128": {
+   "ms": 1.27,
+   "recall@10": 0.8384,
+   "speedup": 13.4
+  },
+  "efSearch=256": {
+   "ms": 1.067,
+   "recall@10": 0.8706,
+   "speedup": 16.0
+  },
+  "efSearch=512": {
+   "ms": 2.061,
+   "recall@10": 0.9042,
+   "speedup": 8.3
+  }
+ },
+ "cpu_threads": 12
+}

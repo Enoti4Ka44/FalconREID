@@ -1,0 +1,21 @@
+{
+ "latency_b1_ms": 38.6,
+ "latency_p95_ms": 40.8,
+ "fps": {
+  "1": 26.4,
+  "8": 52.9,
+  "16": 53.7,
+  "32": 55.1
+ },
+ "best_fps": 55.1,
+ "score_latency": 1.0,
+ "score_throughput": 0.101,
+ "points_of_20": 11.01,
+ "prod_extractor": true,
+ "cuda_graphs": true,
+ "flip": false,
+ "gpu_decode": false,
+ "compile": false,
+ "peak_vram_gb": 1.88,
+ "gpu": "NVIDIA GeForce RTX 3060"
+}

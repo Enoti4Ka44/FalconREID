@@ -1,0 +1,12 @@
+# Запуск без видеокарты NVIDIA (например, на ноутбуке для просмотра интерфейса):
+#
+#   docker compose -f docker-compose.yml -f docker-compose.cpu.yml up --build -d
+#   docker compose -f docker-compose.yml -f docker-compose.cpu.yml run --rm inference
+#
+# Снимает резервирование GPU; инференс идёт на CPU (заметно медленнее,
+# результат тот же с точностью до округления fp16).
+services:
+  backend:
+    deploy: !reset {}
+  inference:
+    deploy: !reset {}
